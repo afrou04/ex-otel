@@ -2,6 +2,8 @@
 
 This project demonstrates how to use Node.js, TypeScript, Jaeger, Docker Compose, and OpenTelemetry Collector to collect trace data and export it to Jaeger.
 
+![image](https://github.com/afrou04/ex-otel/assets/38108000/e1b947b0-1fe6-4f43-b10c-9a1fe4a63f5c)
+
 ## Setup
 
 - Node.js
