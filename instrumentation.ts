@@ -1,26 +1,39 @@
+import * as opentelemetry from '@opentelemetry/sdk-node';
 import { Resource } from "@opentelemetry/resources";
 import {
   SEMRESATTRS_SERVICE_NAME,
   SEMRESATTRS_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
-import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import {
-  BatchSpanProcessor,
-  ConsoleSpanExporter,
-} from "@opentelemetry/sdk-trace-base";
+import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
+import { OTLPMetricExporter } from '@opentelemetry/exporter-metrics-otlp-proto';
+import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
+
+// OTLPトレースエクスポーターの設定
+const otlpTraceExporter = new OTLPTraceExporter({
+  url: 'http://localhost:4318/v1/traces', 
+  headers: {},
+});
+
+// OTLPメトリクスエクスポーターの設定
+const otlpMetricExporter = new OTLPMetricExporter({
+  url: 'http://localhost:4318/v1/metrics', 
+  headers: {},
+});
 
 const resource = Resource.default().merge(
   new Resource({
-    [SEMRESATTRS_SERVICE_NAME]: "service-name-here",
+    [SEMRESATTRS_SERVICE_NAME]: "example-express-api-server",
     [SEMRESATTRS_SERVICE_VERSION]: "0.1.0",
   })
 );
 
-const provider = new WebTracerProvider({
+export const sdk = new opentelemetry.NodeSDK({
   resource: resource,
+  traceExporter: otlpTraceExporter,
+  metricReader: new PeriodicExportingMetricReader({
+    exporter: otlpMetricExporter,
+  }),
+  instrumentations: [getNodeAutoInstrumentations()],
 });
-const exporter = new ConsoleSpanExporter();
-const processor = new BatchSpanProcessor(exporter);
-provider.addSpanProcessor(processor);
 
-provider.register();

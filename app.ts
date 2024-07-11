@@ -1,14 +1,14 @@
 /*app.ts*/
-import { trace } from "@opentelemetry/api";
 import express, { Express } from "express";
 import { rollTheDice } from "./dice";
-
-const tracer = trace.getTracer("dice-server", "0.1.0");
+import { sdk } from "./instrumentation";
 
 const PORT: number = parseInt(process.env.PORT || "8080");
 const app: Express = express();
 
-app.get("/rolldice", (req, res) => {
+sdk.start()
+
+app.get("/rolldice", async (req, res) => {
   const rolls = req.query.rolls ? parseInt(req.query.rolls.toString()) : NaN;
   if (isNaN(rolls)) {
     res
@@ -16,7 +16,11 @@ app.get("/rolldice", (req, res) => {
       .send("Request parameter 'rolls' is missing or not a number.");
     return;
   }
-  res.send(JSON.stringify(rollTheDice(rolls, 1, 6)));
+
+  await new Promise(resolve => setTimeout(() => {
+    console.log("delayed response");
+    res.send(JSON.stringify(rollTheDice(rolls, 1, 6)));
+  }, 3000))
 });
 
 app.listen(PORT, () => {
